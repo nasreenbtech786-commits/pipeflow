@@ -1,0 +1,52 @@
+# ==========================================
+# PipeFlow - Git Ignore
+# ==========================================
+
+# ------------------------------------------
+# Compiled main executables
+# ------------------------------------------
+pipeflow
+basic_pipe
+parser.o
+
+# ------------------------------------------
+# Compiled stage executables
+# ------------------------------------------
+stages/source
+stages/transform
+stages/sink
+stages/grep_stage
+stages/count
+stages/fast_source
+stages/head_stage
+stages/file_source
+stages/file_sink
+stages/slow_sink
+stages/benchmark_source
+
+# ------------------------------------------
+# Object files
+# ------------------------------------------
+*.o
+*.obj
+
+# ------------------------------------------
+# Temporary/editor files
+# ------------------------------------------
+*.swp
+*.swo
+*~
+.#*
+
+# ------------------------------------------
+# Benchmark generated output
+# ------------------------------------------
+tests/backpressure_output.txt
+
+# ------------------------------------------
+# Temporary build/debug files
+# ------------------------------------------
+build/
+bin/
+*.log
+

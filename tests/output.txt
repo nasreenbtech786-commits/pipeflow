@@ -1,0 +1,5 @@
+TRANSFORMED: record-A
+TRANSFORMED: record-B
+TRANSFORMED: record-C
+TRANSFORMED: record-D
+TRANSFORMED: record-E
