@@ -63,3 +63,4 @@ test-dag-runtime: all
 	gcc $(CFLAGS) tests/test_dag_runtime.c src/dag_runtime.c src/dag.c src/parser.c -o /tmp/test_dag_runtime
 	timeout 15s /tmp/test_dag_runtime fanout
 	timeout 15s /tmp/test_dag_runtime fanin
+	timeout 15s /tmp/test_dag_runtime failure

@@ -1,10 +1,6 @@
-PipeFlow Verification Report
-Mon Oct 12 13:53:15 UTC 2026
-
-=== Build ===
+========== BUILD ==========
 make: Nothing to be done for 'all'.
-
-=== DAG Unit Tests ===
+========== DAG UNIT TESTS ==========
 gcc -Wall -Wextra -std=gnu11 -Iinclude \
     tests/test_dag.c src/dag.c -o /tmp/pipeflow_test_dag
 /tmp/pipeflow_test_dag
@@ -23,63 +19,38 @@ DAG contains a cycle
 [PASS] Accept disconnected acyclic graph
 
 DAG tests: 12 passed, 0 failed
-
-=== DAG Runtime Tests ===
+========== DAG RUNTIME TESTS ==========
 gcc -Wall -Wextra -std=gnu11 -Iinclude tests/test_dag_runtime.c src/dag_runtime.c src/dag.c src/parser.c -o /tmp/test_dag_runtime
 timeout 15s /tmp/test_dag_runtime fanout
 
 === FAN-OUT TEST ===
 One source -> two consumers
+[io-metrics] component=dag_merge blocked_seconds=0.000339
+[io-metrics] component=dag_merge blocked_seconds=0.000073
+[io-metrics] component=dag_merge blocked_seconds=0.000001
+[io-metrics] component=dag_merge blocked_seconds=0.000001
 Records: 5
+[metrics] stage=count records=5 elapsed=0.000418 s throughput=11961.44 records/sec
 Records: 5
+[metrics] stage=count records=5 elapsed=0.000064 s throughput=77731.48 records/sec
 DAG execution completed
 timeout 15s /tmp/test_dag_runtime fanin
 
 === FAN-IN TEST ===
 Two sources -> one consumer
+[io-metrics] component=dag_merge blocked_seconds=0.000002
+[io-metrics] component=dag_merge blocked_seconds=0.000001
 Records: 10
+[metrics] stage=count records=10 elapsed=0.001385 s throughput=7220.58 records/sec
 DAG execution completed
+timeout 15s /tmp/test_dag_runtime failure
 
-=== Linear Pipeline ===
-printf 'file_source tests/input.txt | transform | count\n' > /tmp/pipeflow_demo.conf
-./pipeflow /tmp/pipeflow_demo.conf
-
-PipeFlow
-========
-Configuration: file_source tests/input.txt | transform | count
-Stages: 3
-Stage 0: file_source tests/input.txt
-Stage 1: transform
-Stage 2: count
-Starting pipeline...
-Records: 5
-Stage 0 (file_source) started with PID=1112
-Stage 1 (transform) started with PID=1113
-Stage 2 (count) started with PID=1114
-Stage 0 exited with status 0
-Stage 1 exited with status 0
-Stage 2 exited with status 0
-Pipeline completed successfully.
-
-=== SIGPIPE Handling ===
-./pipeflow configs/basic.conf
-
-PipeFlow
-========
-Configuration: fast_source | head_stage
-Stages: 2
-Stage 0: fast_source
-Stage 1: head_stage
-Starting pipeline...
-record-1
-fast_source: downstream closed pipe
-Stage 0 (fast_source) started with PID=1117
-Stage 1 (head_stage) started with PID=1118
-Stage 0 exited with status 0
-Stage 1 exited with status 0
-Pipeline completed successfully.
-
-=== Backpressure ===
+=== FAILURE-INJECTION TEST ===
+A nonexistent stage command should make DAG execution fail.
+execvp DAG stage: No such file or directory
+DAG execution failed
+PASS: DAG execution reported failure.
+========== BACKPRESSURE TEST ==========
 printf 'benchmark_source | slow_sink\n' > /tmp/pipeflow_backpressure.conf
 time ./pipeflow /tmp/pipeflow_backpressure.conf
 
@@ -90,6 +61,7 @@ Stages: 2
 Stage 0: benchmark_source
 Stage 1: slow_sink
 Starting pipeline...
+[metrics] stage=benchmark_source records=1000 elapsed=0.000183 s throughput=5451284.60 records/sec
 record-1
 record-2
 record-3
@@ -1090,39 +1062,64 @@ record-997
 record-998
 record-999
 record-1000
-Stage 0 (benchmark_source) started with PID=1123
-Stage 1 (slow_sink) started with PID=1124
+Stage 0 (benchmark_source) started with PID=5914
+Stage 1 (slow_sink) started with PID=5915
 Stage 0 exited with status 0
 Stage 1 exited with status 0
 Pipeline completed successfully.
-0.02user 0.02system 0:01.27elapsed 3%CPU (0avgtext+0avgdata 1776maxresident)k
-0inputs+0outputs (0major+252minor)pagefaults 0swaps
+0.00user 0.03system 0:01.29elapsed 3%CPU (0avgtext+0avgdata 1912maxresident)k
+0inputs+0outputs (0major+255minor)pagefaults 0swaps
+========== CLEANUP TEST ==========
+=== PipeFlow Failure Cleanup Test ===
+make: Nothing to be done for 'all'.
+gcc -Wall -Wextra -std=gnu11 -Iinclude \
+    tests/test_dag.c src/dag.c -o /tmp/pipeflow_test_dag
+/tmp/pipeflow_test_dag
+DAG contains a cycle
+[PASS] DAG initialization
+[PASS] Add edge 0 -> 1
+[PASS] Add edge 0 -> 2
+[PASS] Validate fan-out graph
+[PASS] Reject duplicate edge
+[PASS] Reject negative source
+[PASS] Reject out-of-range destination
+[PASS] Reject self-loop
+[PASS] Add edge 1 -> 2
+[PASS] Add edge 2 -> 0
+[PASS] Reject cyclic graph
+[PASS] Accept disconnected acyclic graph
 
-=== Fan-out ===
+DAG tests: 12 passed, 0 failed
+gcc -Wall -Wextra -std=gnu11 -Iinclude tests/test_dag_runtime.c src/dag_runtime.c src/dag.c src/parser.c -o /tmp/test_dag_runtime
+timeout 15s /tmp/test_dag_runtime fanout
+
+=== FAN-OUT TEST ===
+One source -> two consumers
+[io-metrics] component=dag_merge blocked_seconds=0.000290
+[io-metrics] component=dag_merge blocked_seconds=0.000001
+[io-metrics] component=dag_merge blocked_seconds=0.000663
+[io-metrics] component=dag_merge blocked_seconds=0.000066
 Records: 5
 Records: 5
-
-PipeFlow DAG Runtime
-====================
-Registered stage 0: file_source
-Registered stage 1: count
-Registered stage 2: count
-Stages: 3
-Edges: 2
-Starting DAG execution...
+[metrics] stage=count records=5 elapsed=0.000471 s throughput=10626.72 records/sec
+[metrics] stage=count records=5 elapsed=0.000854 s throughput=5853.74 records/sec
 DAG execution completed
-DAG execution completed successfully.
+timeout 15s /tmp/test_dag_runtime fanin
 
-=== Fan-in ===
+=== FAN-IN TEST ===
+Two sources -> one consumer
+[io-metrics] component=dag_merge blocked_seconds=0.000003
+[io-metrics] component=dag_merge blocked_seconds=0.000002
 Records: 10
-
-PipeFlow DAG Runtime
-====================
-Registered stage 0: file_source
-Registered stage 1: file_source
-Registered stage 2: count
-Stages: 3
-Edges: 2
-Starting DAG execution...
+[metrics] stage=count records=10 elapsed=0.000443 s throughput=22552.03 records/sec
 DAG execution completed
-DAG execution completed successfully.
+timeout 15s /tmp/test_dag_runtime failure
+
+=== FAILURE-INJECTION TEST ===
+A nonexistent stage command should make DAG execution fail.
+execvp DAG stage: No such file or directory
+DAG execution failed
+PASS: DAG execution reported failure.
+PASS: No matching PipeFlow processes remain.
+=== Cleanup Test Finished ===
+========== ALL CHECKS PASSED ==========

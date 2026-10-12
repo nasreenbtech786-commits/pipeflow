@@ -92,10 +92,41 @@ setup_error:
     return 1;
 }
 
+
+static int run_failure(void)
+{
+    PipelineDAG dag = {0};
+    dag_init(&dag);
+
+    /* This command must not exist. */
+    int bad = add_stage(&dag, "pipeflow_command_that_does_not_exist");
+
+    if (bad < 0) {
+        fprintf(stderr, "Could not configure failure test\n");
+        free_pipeline(&dag.pipeline);
+        return 1;
+    }
+
+    puts("\n=== FAILURE-INJECTION TEST ===");
+    puts("A nonexistent stage command should make DAG execution fail.");
+    fflush(stdout);
+
+    int result = dag_execute(&dag);
+    free_pipeline(&dag.pipeline);
+
+    if (result != 0) {
+        puts("PASS: DAG execution reported failure.");
+        return 0;
+    }
+
+    fprintf(stderr, "FAIL: DAG execution reported success for a missing command.\n");
+    return 1;
+}
+
 int main(int argc, char **argv)
 {
     if (argc != 2) {
-        fprintf(stderr, "Usage: %s fanout|fanin\n", argv[0]);
+        fprintf(stderr, "Usage: %s fanout|fanin|failure\n", argv[0]);
         return 2;
     }
 
@@ -104,6 +135,9 @@ int main(int argc, char **argv)
 
     if (strcmp(argv[1], "fanin") == 0)
         return run_fanin();
+
+    if (strcmp(argv[1], "failure") == 0)
+        return run_failure();
 
     fprintf(stderr, "Unknown test: %s\n", argv[1]);
     return 2;

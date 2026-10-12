@@ -3,6 +3,7 @@
 #include <errno.h>
 #include <fcntl.h>
 #include <poll.h>
+#include <time.h>
 #include <signal.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -133,7 +134,20 @@ static void merge_process(
     int remaining = input_count;
 
     while (remaining > 0) {
+        struct timespec io_start, io_end;
+        clock_gettime(CLOCK_MONOTONIC, &io_start);
         int ready = poll(pfds, (nfds_t)input_count, -1);
+        clock_gettime(CLOCK_MONOTONIC, &io_end);
+
+        double blocked_seconds =
+            (io_end.tv_sec - io_start.tv_sec) +
+            (io_end.tv_nsec - io_start.tv_nsec) / 1000000000.0;
+
+        if (blocked_seconds > 0.0) {
+            dprintf(STDERR_FILENO,
+                    "[io-metrics] component=dag_merge blocked_seconds=%.6f\n",
+                    blocked_seconds);
+        }
 
         if (ready < 0) {
             if (errno == EINTR)
